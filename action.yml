@@ -1,14 +1,22 @@
 name: 'Publish Conda Locally'
+author: 'Curtis Mayberry'
 description: 'Publuch a conda package to a local channel'
 inputs:
-  package_path:  # id of input
-    description: 'Path to the package taball file'
+  package_path:
+    description: 'Path to the Conda package tarball (*.tar.bz2) file'
     required: true
-    default: 'World'
-  channel_path:  # id of input
-    description: 'Path to the local channel'
+  channel_path:
+    description: 'Path to the local Conda channel'
     required: true
-    default: 'World'
+  channel_subdir:
+    description: 'The Conda channel subdirectory or platform in which to release the package.  Common options include linux-64
+      (default), linux-32, win-64, win-32, osx-64'
+    required: false
+    default: 'linux-64'
+  build_env_prefix:
+    description: 'Path to the root of a build Conda env containing conda and conda build.  Defaults to "./envs/build"'
+    required: false
+    default: './envs/build'
 outputs:
   random-number:
     description: "Random number"
@@ -16,10 +24,26 @@ outputs:
 runs:
   using: "composite"
   steps:
-    - run: echo Hello ${{ inputs.who-to-greet }}.
+    - name: display inputs
+      run: |
+        echo "Path to the package:\n  " ${{ inputs.package_path }}
+        echo "Path to the local channel:\n  " ${{ inputs.channel_path }}
+        echo "Local Channel Subdirectory:\n  " ${{ inputs.channel_subdir }}
+        echo "Build environment Prefix:\n  " ${{ inputs.build_env_prefix }}
+        echo "Artifact Upload:\n  " ${{ inputs.artifact_upload }}
       shell: bash
-    - id: random-number-generator
-      run: echo "::set-output name=random-id::$(echo $RANDOM)"
+    - name: Copy package to the channel
+      id: random-number-generator
+      run: cp -f ${{ inputs.package_path }} ${{ inputs.channel_path }}/${{ inputs.channel_subdir }}
       shell: bash
-    - run: ${{ github.action_path }}/goodbye.sh
+    - name: index the channel
+      run: |
+        source ${{ inputs.build_env_prefix }}/etc/profile.d/conda.sh
+        conda index ${{ inputs.channel_path }}
       shell: bash
+    - name: list the channel contents
+      run: ls -al ${{ inputs.channel_path }}/${{ inputs.channel_subdir }}
+      shell: bash
+branding:
+  icon: 'package'
+  color: 'green'
