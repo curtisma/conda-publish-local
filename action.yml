@@ -1,0 +1,25 @@
+name: 'Publish Conda Locally'
+description: 'Publuch a conda package to a local channel'
+inputs:
+  package_path:  # id of input
+    description: 'Path to the package taball file'
+    required: true
+    default: 'World'
+  channel_path:  # id of input
+    description: 'Path to the local channel'
+    required: true
+    default: 'World'
+outputs:
+  random-number:
+    description: "Random number"
+    value: ${{ steps.random-number-generator.outputs.random-id }}
+runs:
+  using: "composite"
+  steps:
+    - run: echo Hello ${{ inputs.who-to-greet }}.
+      shell: bash
+    - id: random-number-generator
+      run: echo "::set-output name=random-id::$(echo $RANDOM)"
+      shell: bash
+    - run: ${{ github.action_path }}/goodbye.sh
+      shell: bash
